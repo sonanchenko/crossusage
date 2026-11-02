@@ -46,6 +46,75 @@ describe("useAppUpdate", () => {
     expect(result.current.updateStatus).toEqual({ status: "checking" })
   })
 
+  describe("autoCheck option", () => {
+    it("does not contact the update server on its own when autoCheck is false", async () => {
+      vi.useFakeTimers()
+      try {
+        const { result } = renderHook(() => useAppUpdate({ autoCheck: false }))
+        await act(() => Promise.resolve())
+        // Neither on mount nor on the 15 minute interval.
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(60 * 60 * 1000)
+        })
+        expect(checkMock).not.toHaveBeenCalled()
+        expect(result.current.updateStatus).toEqual({ status: "idle" })
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it("still checks when the user asks, even with autoCheck off", async () => {
+      checkMock.mockResolvedValue(null)
+      const { result } = renderHook(() => useAppUpdate({ autoCheck: false }))
+      await act(() => Promise.resolve())
+      expect(checkMock).not.toHaveBeenCalled()
+
+      await act(() => result.current.checkForUpdates())
+      expect(checkMock).toHaveBeenCalledTimes(1)
+      expect(result.current.updateStatus.status).toBe("up-to-date")
+    })
+
+    it("starts checking when autoCheck is switched on", async () => {
+      checkMock.mockReturnValue(new Promise(() => {}))
+      const { result, rerender } = renderHook(
+        ({ autoCheck }) => useAppUpdate({ autoCheck }),
+        { initialProps: { autoCheck: false } },
+      )
+      await act(() => Promise.resolve())
+      expect(checkMock).not.toHaveBeenCalled()
+
+      rerender({ autoCheck: true })
+      await act(() => Promise.resolve())
+      expect(checkMock).toHaveBeenCalledTimes(1)
+      expect(result.current.updateStatus).toEqual({ status: "checking" })
+    })
+
+    it("drops an already downloaded update when autoCheck is switched off", async () => {
+      const installMock = vi.fn()
+      checkMock.mockResolvedValue({
+        version: "1.0.0",
+        download: vi.fn(async (onEvent: (event: any) => void) => onEvent({ event: "Finished", data: {} })),
+        install: installMock,
+      })
+      const { result, rerender } = renderHook(
+        ({ autoCheck }) => useAppUpdate({ autoCheck }),
+        { initialProps: { autoCheck: true } },
+      )
+      await act(() => Promise.resolve())
+      await act(() => Promise.resolve())
+      expect(result.current.updateStatus.status).toBe("ready")
+
+      rerender({ autoCheck: false })
+      await act(() => Promise.resolve())
+      expect(result.current.updateStatus).toEqual({ status: "idle" })
+
+      // The tray "Restart" item and the footer both go through triggerInstall: it must be a no-op now.
+      await act(() => result.current.triggerInstall())
+      expect(installMock).not.toHaveBeenCalled()
+      expect(relaunchMock).not.toHaveBeenCalled()
+    })
+  })
+
   it("stays idle when not running in Tauri", async () => {
     globalThis.isTauri = false
 

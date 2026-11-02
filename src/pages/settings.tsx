@@ -22,6 +22,7 @@ import { disable as disableAutostart } from "@tauri-apps/plugin-autostart";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import type { UpdateStatus } from "@/hooks/use-app-update";
 import { ProviderIcon } from "@/components/provider-icon";
 import { GlobalShortcutSection } from "@/components/global-shortcut-section";
 import { LanguageRegionSection } from "@/components/settings/language-region-section";
@@ -661,6 +662,71 @@ function ProviderAccountForm({
   );
 }
 
+function updateStatusText(status: UpdateStatus): string {
+  switch (status.status) {
+    case "checking":
+      return "Checking...";
+    case "downloading":
+      return status.progress >= 0 ? `Downloading update... ${status.progress}%` : "Downloading update...";
+    case "ready":
+      return `Version ${status.version} is downloaded. Restart to install it.`;
+    case "installing":
+      return "Installing...";
+    case "up-to-date":
+      return "You are on the latest version.";
+    case "error":
+      return status.message;
+    default:
+      return "";
+  }
+}
+
+function UpdatesSection({
+  autoCheckForUpdates,
+  onAutoCheckForUpdatesChange,
+  updateStatus,
+  onUpdateCheck,
+}: {
+  autoCheckForUpdates: boolean;
+  onAutoCheckForUpdatesChange: (value: boolean) => void;
+  updateStatus: UpdateStatus;
+  onUpdateCheck: () => void;
+}) {
+  const busy =
+    updateStatus.status === "checking" ||
+    updateStatus.status === "downloading" ||
+    updateStatus.status === "installing";
+  const statusText = updateStatusText(updateStatus);
+  return (
+    <section>
+      <h3 className="text-lg font-semibold mb-0">Updates</h3>
+      <p className="text-sm text-muted-foreground mb-2">
+        By default CrossUsage looks for a new version every 15 minutes and downloads it in the background; it is
+        installed when you choose Restart. Turn this off to stay on your current version: nothing contacts the
+        update server until you press Check now.
+      </p>
+      <label className="flex items-center gap-2 text-sm select-none text-foreground">
+        <Checkbox
+          key={`auto-check-for-updates-${autoCheckForUpdates}`}
+          checked={autoCheckForUpdates}
+          onCheckedChange={(checked) => onAutoCheckForUpdatesChange(checked === true)}
+        />
+        Check for updates automatically
+      </label>
+      <div className="mt-2 flex items-center gap-2">
+        <Button type="button" size="sm" variant="outline" onClick={onUpdateCheck} disabled={busy}>
+          Check now
+        </Button>
+        {statusText ? (
+          <span className="text-xs text-muted-foreground" aria-live="polite">
+            {statusText}
+          </span>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function InsightsSection() {
   const showTrayInsight = useAppPreferencesStore((state) => state.showTrayInsight);
   const setShowTrayInsight = useAppPreferencesStore((state) => state.setShowTrayInsight);
@@ -1220,6 +1286,10 @@ interface SettingsPageProps {
   startOnLoginError?: string | null;
   usageAlertEnabled: boolean;
   onUsageAlertEnabledChange: (value: boolean) => void;
+  autoCheckForUpdates: boolean;
+  onAutoCheckForUpdatesChange: (value: boolean) => void;
+  updateStatus: UpdateStatus;
+  onUpdateCheck: () => void;
   usageAlertThreshold: UsageAlertThreshold;
   onUsageAlertThresholdChange: (value: UsageAlertThreshold) => void;
   customUsageAlertThreshold: number | null;
@@ -1280,6 +1350,10 @@ export function SettingsPage({
   startOnLoginError,
   usageAlertEnabled,
   onUsageAlertEnabledChange,
+  autoCheckForUpdates,
+  onAutoCheckForUpdatesChange,
+  updateStatus,
+  onUpdateCheck,
   usageAlertThreshold,
   onUsageAlertThresholdChange,
   customUsageAlertThreshold,
@@ -1882,6 +1956,12 @@ export function SettingsPage({
           </p>
         ) : null}
       </section>
+      <UpdatesSection
+        autoCheckForUpdates={autoCheckForUpdates}
+        onAutoCheckForUpdatesChange={onAutoCheckForUpdatesChange}
+        updateStatus={updateStatus}
+        onUpdateCheck={onUpdateCheck}
+      />
       <InsightsSection />
       <ProductPollsSection />
       <LocalApiSection />

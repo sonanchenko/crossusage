@@ -14,6 +14,7 @@ import {
   DEFAULT_TIME_FORMAT_MODE,
   DEFAULT_USAGE_ALERT_CUSTOM_THRESHOLD,
   DEFAULT_USAGE_ALERT_ENABLED,
+  DEFAULT_AUTO_CHECK_FOR_UPDATES,
   DEFAULT_USAGE_ALERT_SOUND,
   DEFAULT_USAGE_ALERT_THRESHOLD,
   USAGE_ALERT_CUSTOM_THRESHOLD_KEY,
@@ -42,6 +43,8 @@ import {
   loadTimeFormatMode,
   loadUsageAlertCustomThreshold,
   loadUsageAlertEnabled,
+  loadAutoCheckForUpdates,
+  saveAutoCheckForUpdates,
   loadUsageAlertSound,
   loadUsageAlertThreshold,
   migrateLegacyTraySettings,
@@ -778,6 +781,26 @@ describe("settings", () => {
 
       await saveUsageAlertEnabled(false)
       await expect(loadUsageAlertEnabled()).resolves.toBe(false)
+    })
+  })
+
+  describe("loadAutoCheckForUpdates / saveAutoCheckForUpdates", () => {
+    it("is on by default, so existing installs keep checking for updates", async () => {
+      expect(DEFAULT_AUTO_CHECK_FOR_UPDATES).toBe(true)
+      await expect(loadAutoCheckForUpdates()).resolves.toBe(true)
+    })
+
+    it("falls back to the default for a non-boolean stored value", async () => {
+      storeState.set("autoCheckForUpdates", "no")
+      await expect(loadAutoCheckForUpdates()).resolves.toBe(DEFAULT_AUTO_CHECK_FOR_UPDATES)
+    })
+
+    it("round-trips true/false", async () => {
+      await saveAutoCheckForUpdates(false)
+      await expect(loadAutoCheckForUpdates()).resolves.toBe(false)
+
+      await saveAutoCheckForUpdates(true)
+      await expect(loadAutoCheckForUpdates()).resolves.toBe(true)
     })
   })
 

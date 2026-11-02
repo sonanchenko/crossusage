@@ -93,6 +93,7 @@ const LEGACY_TRAY_SHOW_PERCENTAGE_KEY = "trayShowPercentage";
 const GLOBAL_SHORTCUT_KEY = "globalShortcut";
 const START_ON_LOGIN_KEY = "startOnLogin";
 export const USAGE_ALERT_ENABLED_KEY = "usageAlertEnabled";
+const AUTO_CHECK_FOR_UPDATES_KEY = "autoCheckForUpdates";
 export const USAGE_ALERT_THRESHOLD_KEY = "usageAlertThreshold";
 export const USAGE_ALERT_CUSTOM_THRESHOLD_KEY = "usageAlertCustomThreshold";
 export const USAGE_ALERT_SOUND_KEY = "usageAlertSound";
@@ -127,6 +128,8 @@ export const DEFAULT_PREFER_MENUBAR_WEEKLY_LIMIT = false;
 export const DEFAULT_GLOBAL_SHORTCUT: GlobalShortcut = null;
 export const DEFAULT_START_ON_LOGIN = false;
 export const DEFAULT_USAGE_ALERT_ENABLED = false;
+/** Background update checks (and downloads) are on unless the user turns them off. */
+export const DEFAULT_AUTO_CHECK_FOR_UPDATES = true;
 export const DEFAULT_USAGE_ALERT_THRESHOLD: UsageAlertThreshold = 20;
 export const DEFAULT_USAGE_ALERT_CUSTOM_THRESHOLD: number | null = null;
 export const DEFAULT_USAGE_ALERT_SOUND: UsageAlertSound = "Basso";
@@ -966,6 +969,17 @@ export async function saveUsageAlertEnabled(value: boolean): Promise<void> {
   await store.save();
 }
 
+export async function loadAutoCheckForUpdates(): Promise<boolean> {
+  const stored = await store.get<unknown>(AUTO_CHECK_FOR_UPDATES_KEY);
+  if (typeof stored === "boolean") return stored;
+  return DEFAULT_AUTO_CHECK_FOR_UPDATES;
+}
+
+export async function saveAutoCheckForUpdates(value: boolean): Promise<void> {
+  await store.set(AUTO_CHECK_FOR_UPDATES_KEY, value);
+  await store.save();
+}
+
 export async function loadUsageAlertThreshold(): Promise<UsageAlertThreshold> {
   const stored = await store.get<unknown>(USAGE_ALERT_THRESHOLD_KEY);
   if (isUsageAlertThreshold(stored)) return stored;
@@ -1326,6 +1340,7 @@ export async function resetAllUserPreferences(): Promise<void> {
   await store.set(GLOBAL_SHORTCUT_KEY, DEFAULT_GLOBAL_SHORTCUT);
   await store.set(START_ON_LOGIN_KEY, DEFAULT_START_ON_LOGIN);
   await store.set(USAGE_ALERT_ENABLED_KEY, DEFAULT_USAGE_ALERT_ENABLED);
+  await store.set(AUTO_CHECK_FOR_UPDATES_KEY, DEFAULT_AUTO_CHECK_FOR_UPDATES);
   await store.set(USAGE_ALERT_THRESHOLD_KEY, DEFAULT_USAGE_ALERT_THRESHOLD);
   await store.set(USAGE_ALERT_CUSTOM_THRESHOLD_KEY, DEFAULT_USAGE_ALERT_CUSTOM_THRESHOLD);
   await store.set(USAGE_ALERT_SOUND_KEY, DEFAULT_USAGE_ALERT_SOUND);

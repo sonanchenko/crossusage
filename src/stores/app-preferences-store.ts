@@ -65,6 +65,8 @@ type AppPreferencesStore = {
   showTotalSpend: boolean
   totalSpendMetric: string
   usageAlertEnabled: boolean
+  /** `null` until the stored value has loaded, so nothing checks for updates before the choice is known. */
+  autoCheckForUpdates: boolean | null
   usageAlertThreshold: UsageAlertThreshold
   customUsageAlertThreshold: number | null
   usageAlertSound: UsageAlertSound
@@ -95,6 +97,7 @@ type AppPreferencesStore = {
   setShowTotalSpend: (value: boolean) => void
   setTotalSpendMetric: (value: string) => void
   setUsageAlertEnabled: (value: boolean) => void
+  setAutoCheckForUpdates: (value: boolean) => void
   setUsageAlertThreshold: (value: UsageAlertThreshold) => void
   setCustomUsageAlertThreshold: (value: number | null) => void
   setUsageAlertSound: (value: UsageAlertSound) => void
@@ -128,6 +131,7 @@ const initialState = {
   showTotalSpend: DEFAULT_SHOW_TOTAL_SPEND,
   totalSpendMetric: DEFAULT_TOTAL_SPEND_METRIC,
   usageAlertEnabled: DEFAULT_USAGE_ALERT_ENABLED,
+  autoCheckForUpdates: null,
   usageAlertThreshold: DEFAULT_USAGE_ALERT_THRESHOLD,
   customUsageAlertThreshold: DEFAULT_USAGE_ALERT_CUSTOM_THRESHOLD,
   usageAlertSound: DEFAULT_USAGE_ALERT_SOUND,
@@ -161,6 +165,7 @@ export const useAppPreferencesStore = create<AppPreferencesStore>((set) => ({
   setShowTotalSpend: (value) => set({ showTotalSpend: value }),
   setTotalSpendMetric: (value) => set({ totalSpendMetric: value }),
   setUsageAlertEnabled: (value) => set({ usageAlertEnabled: value }),
+  setAutoCheckForUpdates: (value) => set({ autoCheckForUpdates: value }),
   setUsageAlertThreshold: (value) => set({ usageAlertThreshold: value }),
   setCustomUsageAlertThreshold: (value) => set({ customUsageAlertThreshold: value }),
   setUsageAlertSound: (value) => set({ usageAlertSound: value }),

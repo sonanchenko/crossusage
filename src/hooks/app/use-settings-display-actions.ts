@@ -15,6 +15,7 @@ import {
   saveDisplayCurrency,
   saveUsageAlertCustomThreshold,
   saveUsageAlertEnabled,
+  saveAutoCheckForUpdates,
   saveUsageAlertSound,
   saveUsagePaceAlertEnabled,
   saveUsageSpikeAlertEnabled,
@@ -52,6 +53,7 @@ type UseSettingsDisplayActionsArgs = {
   setPreferMenubarWeeklyLimit: (value: boolean) => void
   setUIScale: (value: UIScale) => void
   setUsageAlertEnabled: (value: boolean) => void
+  setAutoCheckForUpdates: (value: boolean) => void
   setUsageAlertThreshold: (value: UsageAlertThreshold) => void
   setCustomUsageAlertThreshold: (value: number | null) => void
   setUsageAlertSound: (value: UsageAlertSound) => void
@@ -76,6 +78,7 @@ export function useSettingsDisplayActions({
   setPreferMenubarWeeklyLimit,
   setUIScale,
   setUsageAlertEnabled,
+  setAutoCheckForUpdates,
   setUsageAlertThreshold,
   setCustomUsageAlertThreshold,
   setUsageAlertSound,
@@ -186,6 +189,14 @@ export function useSettingsDisplayActions({
     })
   }, [setUsageAlertEnabled])
 
+  const handleAutoCheckForUpdatesChange = useCallback((value: boolean) => {
+    track("setting_changed", { setting: "auto_check_for_updates", value: value ? "true" : "false" })
+    setAutoCheckForUpdates(value)
+    void saveAutoCheckForUpdates(value).catch((error) => {
+      console.error("Failed to save auto check for updates:", error)
+    })
+  }, [setAutoCheckForUpdates])
+
   const handleUsageAlertThresholdChange = useCallback((value: UsageAlertThreshold) => {
     track("setting_changed", { setting: "usage_alert_threshold", value: String(value) })
     setUsageAlertThreshold(value)
@@ -248,6 +259,7 @@ export function useSettingsDisplayActions({
     handlePreferMenubarWeeklyLimitChange,
     handleUIScaleChange,
     handleUsageAlertEnabledChange,
+    handleAutoCheckForUpdatesChange,
     handleUsageAlertThresholdChange,
     handleUsageAlertCustomThresholdChange,
     handleUsageAlertSoundChange,

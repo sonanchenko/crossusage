@@ -7,6 +7,7 @@ const {
   saveDisplayModeMock,
   savePreferMenubarWeeklyLimitMock,
   saveResetTimerDisplayModeMock,
+  saveAutoCheckForUpdatesMock,
   saveShowAccountIdentityMock,
   saveThemeModeMock,
   saveUIScaleMock,
@@ -17,6 +18,7 @@ const {
   saveResetTimerDisplayModeMock: vi.fn(),
   saveShowAccountIdentityMock: vi.fn(),
   saveUIScaleMock: vi.fn(),
+  saveAutoCheckForUpdatesMock: vi.fn(),
 }))
 
 vi.mock("@/lib/analytics", () => ({
@@ -32,6 +34,7 @@ vi.mock("@/lib/settings", () => ({
   saveUIScale: saveUIScaleMock,
   saveTimeFormatMode: vi.fn(),
   saveUsageAlertEnabled: vi.fn(),
+  saveAutoCheckForUpdates: saveAutoCheckForUpdatesMock,
   saveUsageAlertThreshold: vi.fn(),
   saveUsageAlertCustomThreshold: vi.fn(),
   saveUsageAlertSound: vi.fn(),
@@ -55,6 +58,7 @@ function displayActionsArgs(
     setPreferMenubarWeeklyLimit: vi.fn(),
     setUIScale: vi.fn(),
     setUsageAlertEnabled: vi.fn(),
+    setAutoCheckForUpdates: vi.fn(),
     setUsageAlertThreshold: vi.fn(),
     setCustomUsageAlertThreshold: vi.fn(),
     setUsageAlertSound: vi.fn(),
@@ -71,12 +75,52 @@ describe("useSettingsDisplayActions", () => {
     saveResetTimerDisplayModeMock.mockReset()
     saveShowAccountIdentityMock.mockReset()
     saveUIScaleMock.mockReset()
+    saveAutoCheckForUpdatesMock.mockReset()
+    saveAutoCheckForUpdatesMock.mockResolvedValue(undefined)
     saveThemeModeMock.mockResolvedValue(undefined)
     saveDisplayModeMock.mockResolvedValue(undefined)
     savePreferMenubarWeeklyLimitMock.mockResolvedValue(undefined)
     saveResetTimerDisplayModeMock.mockResolvedValue(undefined)
     saveShowAccountIdentityMock.mockResolvedValue(undefined)
     saveUIScaleMock.mockResolvedValue(undefined)
+  })
+
+  it("persists and applies the automatic update check choice", () => {
+    const setAutoCheckForUpdates = vi.fn()
+    const { result } = renderHook(() =>
+      useSettingsDisplayActions(displayActionsArgs({ setAutoCheckForUpdates }))
+    )
+
+    act(() => {
+      result.current.handleAutoCheckForUpdatesChange(false)
+    })
+
+    expect(setAutoCheckForUpdates).toHaveBeenCalledWith(false)
+    expect(saveAutoCheckForUpdatesMock).toHaveBeenCalledWith(false)
+    expect(trackMock).toHaveBeenCalledWith("setting_changed", {
+      setting: "auto_check_for_updates",
+      value: "false",
+    })
+  })
+
+  it("keeps the choice in memory and logs when saving it fails", async () => {
+    const saveError = new Error("disk full")
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    saveAutoCheckForUpdatesMock.mockRejectedValueOnce(saveError)
+    const setAutoCheckForUpdates = vi.fn()
+    const { result } = renderHook(() =>
+      useSettingsDisplayActions(displayActionsArgs({ setAutoCheckForUpdates }))
+    )
+
+    act(() => {
+      result.current.handleAutoCheckForUpdatesChange(false)
+    })
+
+    expect(setAutoCheckForUpdates).toHaveBeenCalledWith(false)
+    await waitFor(() => {
+      expect(errorSpy).toHaveBeenCalledWith("Failed to save auto check for updates:", saveError)
+    })
+    errorSpy.mockRestore()
   })
 
   it("applies display-related setting changes", () => {

@@ -135,6 +135,10 @@ const defaultProps = {
   onStartOnLoginChange: vi.fn(),
   usageAlertEnabled: false,
   onUsageAlertEnabledChange: vi.fn(),
+  autoCheckForUpdates: true,
+  onAutoCheckForUpdatesChange: vi.fn(),
+  updateStatus: { status: "idle" as const },
+  onUpdateCheck: vi.fn(),
   usageAlertThreshold: 20 as const,
   onUsageAlertThresholdChange: vi.fn(),
   customUsageAlertThreshold: null,
@@ -586,6 +590,49 @@ describe("SettingsPage", () => {
     })
     await userEvent.click(screen.getByText("Start on login"))
     expect(onStartOnLoginChange).toHaveBeenCalledWith(true)
+  })
+
+  describe("Updates section", () => {
+    it("shows automatic update checks as on by default and turns them off", async () => {
+      const onAutoCheckForUpdatesChange = vi.fn()
+      renderSettings({ ...defaultProps, onAutoCheckForUpdatesChange })
+      expect(screen.getByRole("heading", { name: "Updates" })).toBeInTheDocument()
+      expect(screen.getByRole("checkbox", { name: "Check for updates automatically" })).toBeChecked()
+      await userEvent.click(screen.getByText("Check for updates automatically"))
+      expect(onAutoCheckForUpdatesChange).toHaveBeenCalledWith(false)
+    })
+
+    it("turns automatic checks back on when they were off", async () => {
+      const onAutoCheckForUpdatesChange = vi.fn()
+      renderSettings({ ...defaultProps, autoCheckForUpdates: false, onAutoCheckForUpdatesChange })
+      expect(screen.getByRole("checkbox", { name: "Check for updates automatically" })).not.toBeChecked()
+      await userEvent.click(screen.getByText("Check for updates automatically"))
+      expect(onAutoCheckForUpdatesChange).toHaveBeenCalledWith(true)
+    })
+
+    it("checks on demand even when automatic checks are off", async () => {
+      const onUpdateCheck = vi.fn()
+      renderSettings({ ...defaultProps, autoCheckForUpdates: false, onUpdateCheck })
+      await userEvent.click(screen.getByRole("button", { name: "Check now" }))
+      expect(onUpdateCheck).toHaveBeenCalledTimes(1)
+    })
+
+    it("disables Check now while a check or download is in progress", () => {
+      renderSettings({ ...defaultProps, updateStatus: { status: "checking" } })
+      expect(screen.getByRole("button", { name: "Check now" })).toBeDisabled()
+      cleanup()
+      renderSettings({ ...defaultProps, updateStatus: { status: "downloading", progress: 40 } })
+      expect(screen.getByRole("button", { name: "Check now" })).toBeDisabled()
+      expect(screen.getByText("Downloading update... 40%")).toBeInTheDocument()
+    })
+
+    it("reports the result of a check", () => {
+      renderSettings({ ...defaultProps, updateStatus: { status: "up-to-date" } })
+      expect(screen.getByText("You are on the latest version.")).toBeInTheDocument()
+      cleanup()
+      renderSettings({ ...defaultProps, updateStatus: { status: "ready", version: "9.9.9" } })
+      expect(screen.getByText("Version 9.9.9 is downloaded. Restart to install it.")).toBeInTheDocument()
+    })
   })
 
   it("toggles account identity visibility", async () => {

@@ -17,6 +17,7 @@ import {
   DEFAULT_GLOBAL_SHORTCUT,
   DEFAULT_USAGE_ALERT_CUSTOM_THRESHOLD,
   DEFAULT_USAGE_ALERT_ENABLED,
+  DEFAULT_AUTO_CHECK_FOR_UPDATES,
   DEFAULT_USAGE_ALERT_SOUND,
   DEFAULT_USAGE_PACE_ALERT_ENABLED,
   DEFAULT_USAGE_SPIKE_ALERT_ENABLED,
@@ -40,6 +41,7 @@ import {
   loadGlobalShortcut,
   loadUsageAlertCustomThreshold,
   loadUsageAlertEnabled,
+  loadAutoCheckForUpdates,
   loadUsageAlertSound,
   loadUsagePaceAlertEnabled,
   loadUsageSpikeAlertEnabled,
@@ -113,6 +115,7 @@ type UseSettingsBootstrapArgs = {
   setShowTotalSpend: (value: boolean) => void
   setTotalSpendMetric: (value: string) => void
   setUsageAlertEnabled: (value: boolean) => void
+  setAutoCheckForUpdates: (value: boolean) => void
   setUsageAlertThreshold: (value: UsageAlertThreshold) => void
   setCustomUsageAlertThreshold: (value: number | null) => void
   setUsageAlertSound: (value: UsageAlertSound) => void
@@ -148,6 +151,7 @@ export function useSettingsBootstrap({
   setShowTotalSpend,
   setTotalSpendMetric,
   setUsageAlertEnabled,
+  setAutoCheckForUpdates,
   setUsageAlertThreshold,
   setCustomUsageAlertThreshold,
   setUsageAlertSound,
@@ -403,6 +407,13 @@ export function useSettingsBootstrap({
           console.error("Failed to load usage alert enabled:", error)
         }
 
+        let storedAutoCheckForUpdates = DEFAULT_AUTO_CHECK_FOR_UPDATES
+        try {
+          storedAutoCheckForUpdates = await loadAutoCheckForUpdates()
+        } catch (error) {
+          console.error("Failed to load auto check for updates:", error)
+        }
+
         let storedUsageAlertThreshold = DEFAULT_USAGE_ALERT_THRESHOLD
         try {
           storedUsageAlertThreshold = await loadUsageAlertThreshold()
@@ -467,6 +478,7 @@ export function useSettingsBootstrap({
           setPreferMenubarWeeklyLimit(storedPreferMenubarWeeklyLimit)
           setUIScale(storedUIScale)
           setUsageAlertEnabled(storedUsageAlertEnabled)
+          setAutoCheckForUpdates(storedAutoCheckForUpdates)
           setUsageAlertThreshold(storedUsageAlertThreshold)
           setCustomUsageAlertThreshold(storedUsageAlertCustomThreshold)
           setUsageAlertSound(storedUsageAlertSound)
@@ -527,6 +539,7 @@ export function useSettingsBootstrap({
     setDisplayCurrency,
     setUIScale,
     setUsageAlertEnabled,
+    setAutoCheckForUpdates,
     setUsageAlertSound,
     setUsageAlertThreshold,
     startBatch,

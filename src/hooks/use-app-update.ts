@@ -22,7 +22,15 @@ interface UseAppUpdateReturn {
 const UPDATER_CHECKS_ENABLED =
   import.meta.env.PROD || import.meta.env.VITE_UPDATER_IN_DEV === "true"
 
-export function useAppUpdate(): UseAppUpdateReturn {
+interface UseAppUpdateOptions {
+  /**
+   * Check for updates (and download them) in the background. When false nothing contacts the
+   * update server on its own; `checkForUpdates` still works when the user asks for it.
+   */
+  autoCheck?: boolean
+}
+
+export function useAppUpdate({ autoCheck = true }: UseAppUpdateOptions = {}): UseAppUpdateReturn {
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ status: "idle" })
   const statusRef = useRef<UpdateStatus>({ status: "idle" })
   const updateRef = useRef<Update | null>(null)
@@ -114,21 +122,30 @@ export function useAppUpdate(): UseAppUpdateReturn {
 
   useEffect(() => {
     mountedRef.current = true
-    void checkForUpdates()
+    let intervalId: ReturnType<typeof setInterval> | undefined
 
-    // Check every 15 minutes
-    const intervalId = setInterval(() => {
+    if (autoCheck) {
       void checkForUpdates()
-    }, 15 * 60 * 1000)
+
+      // Check every 15 minutes
+      intervalId = setInterval(() => {
+        void checkForUpdates()
+      }, 15 * 60 * 1000)
+    } else if (statusRef.current.status === "ready") {
+      // Turned off with an update already downloaded: drop it so neither the footer nor the
+      // tray "Restart" item (which installs when an update is ready) can apply it by accident.
+      updateRef.current = null
+      setStatus({ status: "idle" })
+    }
 
     return () => {
       mountedRef.current = false
-      clearInterval(intervalId)
+      if (intervalId !== undefined) clearInterval(intervalId)
       if (upToDateTimeoutRef.current !== null) {
         clearTimeout(upToDateTimeoutRef.current)
       }
     }
-  }, [checkForUpdates])
+  }, [checkForUpdates, autoCheck, setStatus])
 
   const triggerInstall = useCallback(async () => {
     const update = updateRef.current

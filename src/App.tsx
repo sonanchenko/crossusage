@@ -77,6 +77,7 @@ function App() {
   const {
     autoUpdateInterval,
     setAutoUpdateInterval,
+    autoCheckForUpdates,
     themeMode,
     setThemeMode,
     uiLayout,
@@ -99,6 +100,7 @@ function App() {
     setGlobalShortcut,
     setStartOnLogin,
     setUsageAlertEnabled,
+    setAutoCheckForUpdates,
     setUsageAlertThreshold,
     setCustomUsageAlertThreshold,
     setUsageAlertSound,
@@ -137,6 +139,8 @@ function App() {
       setGlobalShortcut: state.setGlobalShortcut,
       setStartOnLogin: state.setStartOnLogin,
       setUsageAlertEnabled: state.setUsageAlertEnabled,
+      autoCheckForUpdates: state.autoCheckForUpdates,
+      setAutoCheckForUpdates: state.setAutoCheckForUpdates,
       setUsageAlertThreshold: state.setUsageAlertThreshold,
       setCustomUsageAlertThreshold: state.setCustomUsageAlertThreshold,
       setUsageAlertSound: state.setUsageAlertSound,
@@ -178,7 +182,10 @@ function App() {
   const pluginSettingsRef = useRef(pluginSettings)
   pluginSettingsRef.current = pluginSettings
 
-  const { updateStatus, triggerInstall, checkForUpdates } = useAppUpdate()
+  // `null` means the stored choice has not loaded yet: do not check until it has.
+  const { updateStatus, triggerInstall, checkForUpdates } = useAppUpdate({
+    autoCheck: autoCheckForUpdates === true,
+  })
 
   const { scheduleTrayIconUpdate, traySettingsPreview } = useTrayIcon({
     pluginsMeta,
@@ -220,6 +227,7 @@ function App() {
     setGlobalShortcut,
     setStartOnLogin,
     setUsageAlertEnabled,
+    setAutoCheckForUpdates,
     setUsageAlertThreshold,
     setCustomUsageAlertThreshold,
     setUsageAlertSound,
@@ -252,6 +260,7 @@ function App() {
     handlePreferMenubarWeeklyLimitChange,
     handleUIScaleChange,
     handleUsageAlertEnabledChange,
+    handleAutoCheckForUpdatesChange,
     handleUsageAlertThresholdChange,
     handleUsageAlertCustomThresholdChange,
     handleUsageAlertSoundChange,
@@ -273,6 +282,7 @@ function App() {
     setPreferMenubarWeeklyLimit,
     setUIScale,
     setUsageAlertEnabled,
+    setAutoCheckForUpdates,
     setUsageAlertThreshold,
     setCustomUsageAlertThreshold,
     setUsageAlertSound,
@@ -700,6 +710,9 @@ function App() {
       onStartOnLoginChange: handleStartOnLoginChange,
       startOnLoginError,
       onUsageAlertEnabledChange: handleUsageAlertEnabledChange,
+      onAutoCheckForUpdatesChange: handleAutoCheckForUpdatesChange,
+      updateStatus,
+      onUpdateCheck: checkForUpdates,
       onUsageAlertThresholdChange: handleUsageAlertThresholdChange,
       onUsageAlertCustomThresholdChange: handleUsageAlertCustomThresholdChange,
       onUsageAlertSoundChange: handleUsageAlertSoundChange,

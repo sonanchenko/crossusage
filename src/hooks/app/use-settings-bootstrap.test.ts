@@ -26,6 +26,7 @@ const {
   loadUILayoutMock,
   loadModernDensityMock,
   loadUIScaleMock,
+  loadAutoCheckForUpdatesMock,
   loadTimeFormatModeMock,
   loadAppLocaleMock,
   loadDisplayCurrencyMock,
@@ -61,6 +62,7 @@ const {
   loadUILayoutMock: vi.fn(),
   loadModernDensityMock: vi.fn(),
   loadUIScaleMock: vi.fn(),
+  loadAutoCheckForUpdatesMock: vi.fn(),
   loadTimeFormatModeMock: vi.fn(),
   loadAppLocaleMock: vi.fn(),
   loadDisplayCurrencyMock: vi.fn(),
@@ -95,6 +97,7 @@ vi.mock("@/lib/settings", () => ({
   DEFAULT_GLOBAL_SHORTCUT: null,
   DEFAULT_USAGE_ALERT_CUSTOM_THRESHOLD: null,
   DEFAULT_USAGE_ALERT_ENABLED: false,
+  DEFAULT_AUTO_CHECK_FOR_UPDATES: true,
   DEFAULT_USAGE_ALERT_SOUND: "Basso",
   DEFAULT_USAGE_ALERT_THRESHOLD: 20,
   DEFAULT_USAGE_PACE_ALERT_ENABLED: true,
@@ -126,6 +129,7 @@ vi.mock("@/lib/settings", () => ({
   loadGlobalShortcut: loadGlobalShortcutMock,
   loadUsageAlertCustomThreshold: vi.fn().mockResolvedValue(null),
   loadUsageAlertEnabled: vi.fn().mockResolvedValue(false),
+  loadAutoCheckForUpdates: loadAutoCheckForUpdatesMock,
   loadUsageAlertSound: vi.fn().mockResolvedValue("Basso"),
   loadUsageAlertThreshold: vi.fn().mockResolvedValue(20),
   loadUsagePaceAlertEnabled: vi.fn().mockResolvedValue(true),
@@ -189,6 +193,7 @@ function createArgs() {
     setShowTotalSpend: vi.fn(),
     setTotalSpendMetric: vi.fn(),
     setUsageAlertEnabled: vi.fn(),
+    setAutoCheckForUpdates: vi.fn(),
     setUsageAlertThreshold: vi.fn(),
     setCustomUsageAlertThreshold: vi.fn(),
     setUsageAlertSound: vi.fn(),
@@ -228,6 +233,8 @@ describe("useSettingsBootstrap", () => {
     loadUILayoutMock.mockReset()
     loadModernDensityMock.mockReset()
     loadUIScaleMock.mockReset()
+    loadAutoCheckForUpdatesMock.mockReset()
+    loadAutoCheckForUpdatesMock.mockResolvedValue(true)
     loadTimeFormatModeMock.mockReset()
     loadAppLocaleMock.mockReset()
     loadDisplayCurrencyMock.mockReset()
@@ -338,6 +345,33 @@ describe("useSettingsBootstrap", () => {
 
     expect(disableAutostartMock).toHaveBeenCalledTimes(1)
     expect(enableAutostartMock).not.toHaveBeenCalled()
+  })
+
+  it("applies the stored automatic update check choice", async () => {
+    loadAutoCheckForUpdatesMock.mockResolvedValueOnce(false)
+    const args = createArgs()
+
+    renderHook(() => useSettingsBootstrap(args))
+
+    await waitFor(() => {
+      expect(args.setAutoCheckForUpdates).toHaveBeenCalledWith(false)
+    })
+  })
+
+  it("keeps automatic update checks on when loading the choice fails", async () => {
+    const loadError = new Error("auto check unavailable")
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    loadAutoCheckForUpdatesMock.mockRejectedValueOnce(loadError)
+    const args = createArgs()
+
+    renderHook(() => useSettingsBootstrap(args))
+
+    await waitFor(() => {
+      expect(errorSpy).toHaveBeenCalledWith("Failed to load auto check for updates:", loadError)
+      expect(args.setAutoCheckForUpdates).toHaveBeenCalledWith(true)
+    })
+
+    errorSpy.mockRestore()
   })
 
   it("falls back to default UI scale when loading fails", async () => {

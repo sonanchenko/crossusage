@@ -6,6 +6,7 @@ import { SettingsPage, type ProviderAccountCredentialInput } from "@/pages/setti
 import type { DisplayPluginState } from "@/hooks/app/use-app-plugin-views"
 import type { SettingsPluginState } from "@/hooks/app/use-settings-plugin-list"
 import type { TraySettingsPreview } from "@/hooks/app/use-tray-icon"
+import type { UpdateStatus } from "@/hooks/use-app-update"
 import { useAppPluginStore } from "@/stores/app-plugin-store"
 import { useAppPreferencesStore } from "@/stores/app-preferences-store"
 import { useAppUiStore } from "@/stores/app-ui-store"
@@ -61,6 +62,9 @@ export type AppContentActionProps = {
   onStartOnLoginChange: (value: boolean) => void
   startOnLoginError?: string | null
   onUsageAlertEnabledChange: (value: boolean) => void
+  onAutoCheckForUpdatesChange: (value: boolean) => void
+  updateStatus: UpdateStatus
+  onUpdateCheck: () => void
   onUsageAlertThresholdChange: (value: UsageAlertThreshold) => void
   onUsageAlertCustomThresholdChange: (value: number | null) => void
   onUsageAlertSoundChange: (value: UsageAlertSound) => void
@@ -107,6 +111,9 @@ export function AppContent({
   onStartOnLoginChange,
   startOnLoginError,
   onUsageAlertEnabledChange,
+  onAutoCheckForUpdatesChange,
+  updateStatus,
+  onUpdateCheck,
   onUsageAlertThresholdChange,
   onUsageAlertCustomThresholdChange,
   onUsageAlertSoundChange,
@@ -142,6 +149,7 @@ export function AppContent({
     themeMode,
     startOnLogin,
     usageAlertEnabled,
+    autoCheckForUpdates,
     usageAlertThreshold,
     customUsageAlertThreshold,
     usageAlertSound,
@@ -166,6 +174,7 @@ export function AppContent({
       themeMode: state.themeMode,
       startOnLogin: state.startOnLogin,
       usageAlertEnabled: state.usageAlertEnabled,
+      autoCheckForUpdates: state.autoCheckForUpdates,
       usageAlertThreshold: state.usageAlertThreshold,
       customUsageAlertThreshold: state.customUsageAlertThreshold,
       usageAlertSound: state.usageAlertSound,
@@ -247,6 +256,10 @@ export function AppContent({
         startOnLoginError={startOnLoginError}
         usageAlertEnabled={usageAlertEnabled}
         onUsageAlertEnabledChange={onUsageAlertEnabledChange}
+        autoCheckForUpdates={autoCheckForUpdates !== false}
+        onAutoCheckForUpdatesChange={onAutoCheckForUpdatesChange}
+        updateStatus={updateStatus}
+        onUpdateCheck={onUpdateCheck}
         usageAlertThreshold={usageAlertThreshold}
         onUsageAlertThresholdChange={onUsageAlertThresholdChange}
         customUsageAlertThreshold={customUsageAlertThreshold}
